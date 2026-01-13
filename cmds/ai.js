@@ -23,13 +23,13 @@ module.exports = {
                 }
             }
 
-            const loadingMsg = await api.sendMessage("🧠 Gemini is thinking...", threadID);
+            const loadingMsg = await api.sendMessage("🧠 kupal is thinking...", threadID);
 
             const response = await axios.get(apiUrl);
             const description = response?.data?.data?.description;
 
             if (description) {
-                return api.sendMessage(`🤖 **Gemini**\n━━━━━━━━━━━━━━━━\n${description}\n━━━━━━━━━━━━━━━━`, threadID, loadingMsg.messageID);
+                return api.sendMessage(`🤖 **Yazky**\n━━━━━━━━━━━━━━━━\n${description}\n━━━━━━━━━━━━━━━━`, threadID, loadingMsg.messageID);
             }
 
             return api.sendMessage("⚠️ No description found in response.", threadID, loadingMsg.messageID);
