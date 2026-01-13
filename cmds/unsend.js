@@ -8,7 +8,7 @@ module.exports = {
 
     execute: async ({ api, event }) => {
         if (!event.messageReply) {
-            return api.sendMessage("⚠️ Please reply to a bot message to unsend it.", event.threadID, event.messageID);
+            return api.sendMessage("⚠️ kupal reply to a bot message to unsend it.", event.threadID, event.messageID);
         }
 
         const { messageReply } = event;
