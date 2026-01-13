@@ -1,37 +1,63 @@
-const axios = require('axios');
-const fs = require('fs');
-const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+module.exports.config = {
+	name: "ai",
+	credits: "ryuko",
+	version: '1.0.0',
+	description: "talk with gemini 2.0 flash exp",
+	prefix: false,
+	premium: true,
+	permission: 0,
+	category: "without prefix",
+	cooldowns: 0,
+	dependencies: {
+		"axios": ""
+	}
+}
+const axios = require("axios");
+module.exports.handleEvent = async function({api, event, botname }) {
+	try {
+		const ask = event.body?.toLowerCase() || '';
+		if (ask.includes(botname.toLowerCase())) {
+			try {
+				const escapedBotname = botname.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+				const processedAsk = ask
+					.replace(new RegExp(escapedBotname, 'gi'), '')
+					.replace(/\s+/g, ' ')
+					.trim()
+					.replace(/\s+([,.?!])/g, '$1');
 
-const roleplay = "You are a helpful assistant called gpt4o.";
-const api_key = "12c8883f30b463857aabb5a76a9a4ce421a6497b580a347bdaf7666dc2191e25";
-
-module.exports = {
-    name: 'ai',
-    description: 'Ask an AI question with gpt4o',
-    async execute(api, event, args) {
-        const question = args.join(' ');
-
-        if (!question) {
-            api.sendMessage(`kupal Please enter a question.\nUsage: ${config.prefix}ai <umaasa sa ai>`, event.threadID, event.messageID);
-            return;
-        }
-
-        api.sendMessage("Generating...", event.threadID, event.messageID);
-
-        const url = `https://www.haji-mix-api.gleeze.com/api/gpt4o?ask=${encodeURIComponent(question)}&uid=${encodeURIComponent(event.senderID)}&roleplay=${encodeURIComponent(roleplay)}&api_key=${encodeURIComponent(api_key)}`;
-
-        try {
-            const response = await axios.get(url);
-            if (response.data && response.data.answer) {
-                api.sendMessage(`{}=====yazky====={}\n\n${response.data.answer}`, event.threadID, event.messageID);
-            } else if (response.data && response.data.answer) {
-                // If success property missing but API returned response
-                api.sendMessage(`{}=====yazky====={}\n\n${response.data.answer}`, event.threadID, event.messageID);
-            } else {
-                api.sendMessage("There was an error processing your request. Please try again later.", event.threadID, event.messageID);
-            }
-        } catch (error) {
-            api.sendMessage("There was an error processing your request. Please try again later.", event.threadID, event.messageID);
-        }
-    }
+				try {
+					const attachment = event.messageReply.attachments[0].url;
+					const res = await axios.get(`https://character.ryukodev.gleeze.com/api?name=gemini&message=${encodeURIComponent(processedAsk)}&imgUrl=${encodeURIComponent(attachment)}`);
+					const reply = res.data.message;
+					return api.sendMessage(reply, event.threadID, event.messageID);
+				} catch (err) {
+					const res = await axios.get(`https://character.ryukodev.gleeze.com/api?name=gemini&message=${encodeURIComponent(processedAsk)}`);
+					const reply = res.data.message;
+					return api.sendMessage(reply, event.threadID, event.messageID);
+				}
+			} catch (error) {
+				return api.sendMessage("failed to get a response from the api.", event.threadID, event.messageID);
+			}
+		}
+	} catch (error) {}
 };
+module.exports.run = async function({ api, event, args, botname }) {
+	const ask = args.join(' ');
+	if (!ask) {
+		return api.sendMessage(`kupal please provide a message`, event.threadID, event.messageID);
+	}
+	try {
+		try {
+			const attachment = event.messageReply.attachments[0].url;
+			const res = await axios.get(`https://character.ryukodev.gleeze.com/api?name=gemini&message=${encodeURIComponent(ask)}&imgUrl=${encodeURIComponent(attachment)}`);
+			const reply = res.data.message;
+			return api.sendMessage(reply, event.threadID, event.messageID);
+		} catch (err) {
+			const res = await axios.get(`https://character.ryukodev.gleeze.com/api?name=gemini&message=${encodeURIComponent(ask)}`);
+			const reply = res.data.message;
+			return api.sendMessage(reply, event.threadID, event.messageID);
+		}
+	} catch (error) {
+		return api.sendMessage("failed to get a response from the api.", event.threadID, event.messageID);
+	}
+                }
