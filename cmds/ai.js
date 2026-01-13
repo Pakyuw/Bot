@@ -1,41 +1,37 @@
-const axios = require("axios");
+const axios = require('axios');
+const fs = require('fs');
+const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+
+const roleplay = "You are a helpful assistant called gpt4o.";
+const api_key = "12c8883f30b463857aabb5a76a9a4ce421a6497b580a347bdaf7666dc2191e25";
 
 module.exports = {
-    name: "ai",
-    usePrefix: false,
-    usage: "ai <your question> | <reply to an image>",
-    version: "1.2",
-    admin: false,
-    cooldown: 2,
+    name: 'ai',
+    description: 'Ask an AI question with gpt4o',
+    async execute(api, event, args) {
+        const question = args.join(' ');
 
-    execute: async ({ api, event, args }) => {
+        if (!question) {
+            api.sendMessage(`kupal Please enter a question.\nUsage: ${config.prefix}ai <umaasa sa ai>`, event.threadID, event.messageID);
+            return;
+        }
+
+        api.sendMessage("Generating...", event.threadID, event.messageID);
+
+        const url = `https://www.haji-mix-api.gleeze.com/api/gpt4o?ask=${encodeURIComponent(question)}&uid=${encodeURIComponent(event.senderID)}&roleplay=${encodeURIComponent(roleplay)}&api_key=${encodeURIComponent(api_key)}`;
+
         try {
-            const { threadID } = event;
-            let prompt = args.join(" ");
-            let imageUrl = null;
-            let apiUrl = `https://autobot.mark-projects.site/api/gemini-2.5-pro-vison?ask=${encodeURIComponent(prompt)}`;
-
-            if (event.messageReply && event.messageReply.attachments.length > 0) {
-                const attachment = event.messageReply.attachments[0];
-                if (attachment.type === "photo") {
-                    imageUrl = attachment.url;
-                    apiUrl += `&imagurl=${encodeURIComponent(imageUrl)}`;
-                }
+            const response = await axios.get(url);
+            if (response.data && response.data.answer) {
+                api.sendMessage(`{}=====yazky====={}\n\n${response.data.answer}`, event.threadID, event.messageID);
+            } else if (response.data && response.data.answer) {
+                // If success property missing but API returned response
+                api.sendMessage(`{}=====yazky====={}\n\n${response.data.answer}`, event.threadID, event.messageID);
+            } else {
+                api.sendMessage("There was an error processing your request. Please try again later.", event.threadID, event.messageID);
             }
-
-            const loadingMsg = await api.sendMessage("🧠 kupal is thinking...", threadID);
-
-            const response = await axios.get(apiUrl);
-            const description = response?.data?.data?.description;
-
-            if (description) {
-                return api.sendMessage(`🤖 **Yazky**\n━━━━━━━━━━━━━━━━\n${description}\n━━━━━━━━━━━━━━━━`, threadID, loadingMsg.messageID);
-            }
-
-            return api.sendMessage("⚠️ No description found in response.", threadID, loadingMsg.messageID);
         } catch (error) {
-            console.error("❌ Gemini Error:", error);
-            return api.sendMessage("❌ Error while contacting Gemini API.", event.threadID);
+            api.sendMessage("There was an error processing your request. Please try again later.", event.threadID, event.messageID);
         }
     }
 };
